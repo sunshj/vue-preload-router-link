@@ -1,0 +1,16 @@
+{
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "vue",
+    "html",
+    "markdown",
+    "json",
+    "jsonc",
+    "yaml"
+  ],
+  "references.preferredLocation": "peek",
+  "typescript.tsdk": "node_modules\\typescript\\lib"
+}
