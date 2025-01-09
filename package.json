@@ -1,6 +1,6 @@
 {
   "name": "vue-preload-router-link",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "packageManager": "pnpm@9.5.0",
   "description": "vue-router RouterLink with preload",
   "type": "module",
