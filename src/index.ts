@@ -31,7 +31,7 @@ export default defineComponent({
     },
     prefetch: {
       type: Boolean,
-      default: false,
+      default: true,
       required: false
     },
     prefetchOn: {
