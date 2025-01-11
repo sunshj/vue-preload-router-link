@@ -5,6 +5,8 @@ import {
   onMounted,
   ref,
   resolveComponent,
+  unref,
+  watch,
   type AllowedComponentProps,
   type AnchorHTMLAttributes,
   type PropType,
@@ -21,6 +23,11 @@ export interface PreloadRouterLinkProps extends Omit<RouterLinkProps, 'to'> {
   prefetchOn?: 'visibility' | 'interaction'
   prefetchedClass?: string
 }
+
+type AllowedPreloadRouterLinkProps = RouterLinkProps &
+  VNodeProps &
+  AllowedComponentProps &
+  AnchorHTMLAttributes
 
 export default defineComponent({
   name: 'PreloadRouterLink',
@@ -51,12 +58,12 @@ export default defineComponent({
     const prefetched = ref(false)
     const el = ref<HTMLAnchorElement | null>(null)
 
-    const linkProps: RouterLinkProps & VNodeProps & AllowedComponentProps & AnchorHTMLAttributes = {
+    const linkProps = ref<AllowedPreloadRouterLinkProps>({
       ...props,
       ref(ref: any) {
         el.value = ref?.$el
       }
-    }
+    })
 
     function shouldPrefetch(mode: PreloadRouterLinkProps['prefetchOn']) {
       return !prefetched.value && props.prefetch === true && props.prefetchOn === mode
@@ -67,6 +74,12 @@ export default defineComponent({
       prefetched.value = true
       await preloadRouteComponents(props.to, router).catch(() => {})
     }
+
+    watch(prefetched, newVal => {
+      if (newVal) {
+        linkProps.value.class = props.prefetchedClass
+      }
+    })
 
     if (shouldPrefetch('visibility')) {
       let idleId: number
@@ -92,17 +105,11 @@ export default defineComponent({
       })
     }
 
-    return () => {
-      if (shouldPrefetch('interaction')) {
-        linkProps.onPointerenter = prefetch.bind(null)
-        linkProps.onFocus = prefetch.bind(null)
-      }
-
-      if (prefetched.value) {
-        linkProps.class = props.prefetchedClass
-      }
-
-      return h(resolveComponent('RouterLink'), linkProps, slots.default)
+    if (shouldPrefetch('interaction')) {
+      linkProps.value.onPointerenter = prefetch.bind(null)
+      linkProps.value.onFocus = prefetch.bind(null)
     }
+
+    return () => h(resolveComponent('RouterLink'), unref(linkProps), slots.default)
   }
 })

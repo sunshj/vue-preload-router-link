@@ -37,7 +37,7 @@ export function useObserver() {
   let observer: IntersectionObserver | null = null
   const callbacks = new Map<Element, () => void>()
 
-  function observe(el: Element, callback: () => void) {
+  return function observe(el: Element, callback: () => void) {
     if (!observer) {
       observer = new IntersectionObserver(entries => {
         for (const entry of entries) {
@@ -60,6 +60,4 @@ export function useObserver() {
       }
     }
   }
-
-  return observe
 }
