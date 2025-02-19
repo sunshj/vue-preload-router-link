@@ -1,12 +1,11 @@
 import {
   defineComponent,
   h,
-  onBeforeUnmount,
-  onMounted,
   ref,
   resolveComponent,
   unref,
   watch,
+  watchEffect,
   type AllowedComponentProps,
   type AnchorHTMLAttributes,
   type PropType,
@@ -81,34 +80,39 @@ export default defineComponent({
       }
     })
 
-    if (shouldPrefetch('visibility')) {
+    watchEffect(onCleanup => {
+      if (!shouldPrefetch('visibility')) return
+
       let idleId: number
       let unobserve: (() => void) | null = null
 
-      onMounted(() => {
-        const observe = useObserver()
-        idleId = requestIdleCallback(() => {
-          if (el.value?.tagName) {
-            unobserve = observe(el.value!, async () => {
-              unobserve?.()
-              unobserve = null
-              await prefetch()
-            })
-          }
-        })
-      })
-
-      onBeforeUnmount(() => {
+      onCleanup(() => {
         if (idleId) cancelIdleCallback(idleId)
         unobserve?.()
-        unobserve = null
       })
-    }
 
-    if (shouldPrefetch('interaction')) {
+      const observe = useObserver()
+      idleId = requestIdleCallback(() => {
+        if (el.value?.tagName) {
+          unobserve = observe(el.value, async () => {
+            unobserve?.()
+            await prefetch()
+          })
+        }
+      })
+    })
+
+    watchEffect(onCleanup => {
+      if (!shouldPrefetch('interaction')) return
+
+      onCleanup(() => {
+        if (linkProps.value.onPointerenter) delete linkProps.value.onPointerenter
+        if (linkProps.value.onFocus) delete linkProps.value.onFocus
+      })
+
       linkProps.value.onPointerenter = prefetch.bind(null)
       linkProps.value.onFocus = prefetch.bind(null)
-    }
+    })
 
     return () => h(resolveComponent('RouterLink'), unref(linkProps), slots.default)
   }
